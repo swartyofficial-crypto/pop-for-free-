@@ -1,6 +1,6 @@
 -- ============================================
--- AUTO WALK + MAINPART CHECK + GUI (v25)
--- Drag düzeltildi + Juicy hover efekti
+-- AUTO WALK + MAINPART CHECK + GUI (v26)
+-- Fountain modeli silinir + drag düzeltildi + juicy hover
 -- ============================================
 
 local player = game.Players.LocalPlayer
@@ -10,6 +10,37 @@ local hrp = char:WaitForChild("HumanoidRootPart")
 
 local baslangic = Vector3.new(124.94, 1.84, -94.24)
 local bitis = Vector3.new(123.41, 1.27, -2190.34)
+
+-- ============================================
+-- FOUNTAIN SİL (model)
+-- ============================================
+local function fountainSil()
+    local anaModel = workspace:FindFirstChild("Better Low Poly Fountain")
+    if anaModel then
+        local fountain = anaModel:FindFirstChild("Fountain")
+        if fountain then
+            fountain:Destroy()
+            print("[AutoWalk] Better Low Poly Fountain > Fountain silindi.")
+            return
+        end
+        -- Fountain alt elemanı yoksa, modelin kendisini sil
+        anaModel:Destroy()
+        print("[AutoWalk] Better Low Poly Fountain (tam model) silindi.")
+        return
+    end
+
+    -- Recursive ara
+    local bulundu = workspace:FindFirstChild("Fountain", true)
+    if bulundu then
+        bulundu:Destroy()
+        print("[AutoWalk] Fountain (recursive) silindi.")
+        return
+    end
+
+    warn("[AutoWalk] Fountain bulunamadı.")
+end
+
+fountainSil()
 
 getgenv().calisiyor = true
 
@@ -347,14 +378,14 @@ task.spawn(function()
     end
 end)
 
--- TOP BAR (DRAG DÜZELTİLDİ)
+-- TOP BAR (DRAG İÇİN ACTIVE FALSE)
 local topBar = Instance.new("Frame")
 topBar.Size = UDim2.new(1, 0, 0, 32)
 topBar.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 topBar.BackgroundTransparency = 0.4
 topBar.BorderSizePixel = 0
 topBar.ZIndex = 5
-topBar.Active = false  -- tıklama main'e geçsin
+topBar.Active = false
 topBar.Parent = main
 
 local topBarCorner = Instance.new("UICorner")
@@ -502,10 +533,10 @@ statusText.ZIndex = 10
 statusText.Active = false
 statusText.Parent = statusBar
 
--- BUTONLAR (JUICY HOVER)
-local function makeButton(text, posX, widthScale, renk, baseSize, bigSize)
+-- BUTONLAR (JUICY)
+local function makeButton(text, posX, renk)
     local b = Instance.new("TextButton")
-    b.Size = baseSize
+    b.Size = UDim2.new(0.5, -14, 0, 30)
     b.Position = UDim2.new(0, posX, 0, 78)
     b.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     b.Text = ""
@@ -575,11 +606,9 @@ local function makeButton(text, posX, widthScale, renk, baseSize, bigSize)
             math.min(255, renk.G * 255 + 50),
             math.min(255, renk.B * 255 + 50)
         )
-        -- Juicy: butonu büyüt
-        b:TweenSize(bigSize, "Back", "Out", 0.2, true)
+        b:TweenSize(UDim2.new(0.5, -10, 0, 34), "Back", "Out", 0.2, true)
         b:TweenPosition(UDim2.new(0, posX - 2, 0, 76), "Back", "Out", 0.2, true)
 
-        -- Shine
         shine.Visible = true
         shine.Position = UDim2.new(-1, 0, 0, 0)
         shine:TweenPosition(UDim2.new(1, 0, 0, 0), "Quad", "Out", 0.6)
@@ -587,22 +616,15 @@ local function makeButton(text, posX, widthScale, renk, baseSize, bigSize)
     end)
     b.MouseLeave:Connect(function()
         bgImg.ImageColor3 = renk
-        -- Geri eski boyuta
-        b:TweenSize(baseSize, "Quad", "Out", 0.2, true)
+        b:TweenSize(UDim2.new(0.5, -14, 0, 30), "Quad", "Out", 0.2, true)
         b:TweenPosition(UDim2.new(0, posX, 0, 78), "Quad", "Out", 0.2, true)
     end)
 
     return b, lbl, bgImg
 end
 
-local startBtn = makeButton("START", 10, 0.5, Color3.fromRGB(60, 200, 100),
-    UDim2.new(0.5, -14, 0, 30),
-    UDim2.new(0.5, -10, 0, 34)
-)
-local stopBtn = makeButton("STOP", 10 + 108, 0.5, Color3.fromRGB(200, 60, 80),
-    UDim2.new(0.5, -14, 0, 30),
-    UDim2.new(0.5, -10, 0, 34)
-)
+local startBtn = makeButton("START", 10, Color3.fromRGB(60, 200, 100))
+local stopBtn = makeButton("STOP", 10 + 108, Color3.fromRGB(200, 60, 80))
 
 -- ============================================
 -- MAINPART KONTROLÜ
@@ -623,17 +645,13 @@ local function mainPartKontrol()
     return false
 end
 
--- ============================================
 -- STATUS
--- ============================================
 local function setStatus(txt, color)
     statusText.Text = txt
     statusDot.BackgroundColor3 = color
 end
 
--- ============================================
 -- WALK LOGIC
--- ============================================
 local function durdur()
     hum:MoveTo(hrp.Position)
     hum:Move(Vector3.zero, false)
@@ -643,7 +661,6 @@ local function yuru()
     while getgenv().calisiyor do
         if not char.Parent or hum.Health <= 0 then break end
 
-        -- 1) Başlangıca yürü
         while char.Parent and hum.Health > 0 and getgenv().calisiyor do
             if (hrp.Position - baslangic).Magnitude < 3 then break end
             hum:MoveTo(baslangic)
@@ -652,7 +669,6 @@ local function yuru()
 
         if not getgenv().calisiyor then break end
 
-        -- 2) Yürüme + 5sn sonra sürekli MainPart kontrolü
         local yurumeDevam = true
         local mainPartDegdi = false
 
@@ -665,7 +681,6 @@ local function yuru()
             end
         end)
 
-        -- 5 saniye bekle (yürürken)
         local beklemeSayaci = 0
         while beklemeSayaci < 5 and yurumeDevam and getgenv().calisiyor do
             task.wait(0.5)
@@ -674,7 +689,6 @@ local function yuru()
 
         if not getgenv().calisiyor then break end
 
-        -- 3) 5sn sonra SÜREKLİ MainPart kontrolü
         while yurumeDevam and getgenv().calisiyor do
             if not char.Parent or hum.Health <= 0 then break end
 
@@ -690,14 +704,11 @@ local function yuru()
 
         if not getgenv().calisiyor then break end
 
-        -- 4) Başa dön
         task.wait(0.3)
     end
 end
 
--- ============================================
 -- BUTON OLAYLARI
--- ============================================
 startBtn.MouseButton1Click:Connect(function()
     tikSesi()
     if getgenv().calisiyor then return end
@@ -732,8 +743,6 @@ toggleBtn.MouseButton1Click:Connect(function()
     toggleBtn.Visible = false
 end)
 
--- ============================================
 -- BAŞLAT
--- ============================================
 task.spawn(yuru)
 print("[AutoWalk] Script loaded.")
