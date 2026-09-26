@@ -1,6 +1,6 @@
 -- ============================================
--- AUTO WALK + TOUCH RESTART + GUI (v16)
--- Yüzen resimler: yuvarlak kırpılmış (kare kenar yok)
+-- AUTO WALK + MAINPART CHECK + GUI (v25)
+-- Drag düzeltildi + Juicy hover efekti
 -- ============================================
 
 local player = game.Players.LocalPlayer
@@ -42,9 +42,7 @@ local function tikSesi()
     task.delay(2, function() s:Destroy() end)
 end
 
--- ============================================
 -- TOGGLE BUTTON
--- ============================================
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Name = "ToggleBtn"
 toggleBtn.Size = UDim2.new(0, 42, 0, 42)
@@ -53,7 +51,6 @@ toggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 toggleBtn.Text = ""
 toggleBtn.AutoButtonColor = false
 toggleBtn.BorderSizePixel = 0
-toggleBtn.Active = true
 toggleBtn.Draggable = true
 toggleBtn.Visible = false
 toggleBtn.ClipsDescendants = true
@@ -82,32 +79,16 @@ local toggleImgCorner = Instance.new("UICorner")
 toggleImgCorner.CornerRadius = UDim.new(1, 0)
 toggleImgCorner.Parent = toggleImg
 
-local toggleShine = Instance.new("ImageLabel")
-toggleShine.Size = UDim2.new(0, 30, 1, 0)
-toggleShine.Position = UDim2.new(-1, 0, 0, 0)
-toggleShine.BackgroundTransparency = 1
-toggleShine.Image = SHINE_RESIM
-toggleShine.ImageTransparency = 0.3
-toggleShine.ZIndex = 3
-toggleShine.Visible = false
-toggleShine.Parent = toggleBtn
-
 toggleBtn.MouseEnter:Connect(function()
     toggleStroke.Transparency = 0
-    toggleStroke.Thickness = 2.2
-    toggleShine.Visible = true
-    toggleShine.Position = UDim2.new(-1, 0, 0, 0)
-    toggleShine:TweenPosition(UDim2.new(1, 0, 0, 0), "Quad", "Out", 0.6)
-    task.delay(0.7, function() toggleShine.Visible = false end)
+    toggleBtn:TweenSize(UDim2.new(0, 46, 0, 46), "Quad", "Out", 0.15, true)
 end)
 toggleBtn.MouseLeave:Connect(function()
     toggleStroke.Transparency = 0.2
-    toggleStroke.Thickness = 1.8
+    toggleBtn:TweenSize(UDim2.new(0, 42, 0, 42), "Quad", "Out", 0.15, true)
 end)
 
--- ============================================
 -- MAIN PANEL
--- ============================================
 local main = Instance.new("Frame")
 main.Name = "Main"
 main.Size = UDim2.new(0, 220, 0, 140)
@@ -117,40 +98,32 @@ main.BorderSizePixel = 0
 main.Active = true
 main.Draggable = true
 main.ClipsDescendants = true
-main.Visible = true
 main.Parent = gui
 
 local mainCorner = Instance.new("UICorner")
 mainCorner.CornerRadius = UDim.new(0, 12)
 mainCorner.Parent = main
 
--- ============================================
--- 10 YÜZEN RESİM (YUVARLAK KIRPILMIŞ)
--- ============================================
+-- YÜZEN RESİMLER
 local yuzerResimler = {}
 
-local function yuzerResimOlustur(index)
+local function yuzerResimOlustur()
     local resim = Instance.new("ImageLabel")
-    resim.Name = "Float" .. index
     resim.Size = UDim2.new(0, 30 + math.random(15, 40), 0, 30 + math.random(15, 40))
-    resim.Position = UDim2.new(
-        math.random() * 1,
-        math.random(-20, 20),
-        math.random() * 1,
-        math.random(-20, 20)
-    )
+    resim.Position = UDim2.new(math.random() * 1, math.random(-20, 20), math.random() * 1, math.random(-20, 20))
     resim.BackgroundTransparency = 1
     resim.Image = RESIM
     resim.ImageTransparency = 0.75 + math.random() * 0.15
-    resim.ScaleType = Enum.ScaleType.Crop  -- daireyi doldursun
+    resim.ScaleType = Enum.ScaleType.Crop
     resim.ZIndex = 2
     resim.Rotation = math.random(-30, 30)
-    resim.ClipsDescendants = true  -- kare kenarları kes
+    resim.ClipsDescendants = true
+    resim.Active = false
     resim.Parent = main
 
-    local rCorner = Instance.new("UICorner")
-    rCorner.CornerRadius = UDim.new(1, 0)  -- tam yuvarlak
-    rCorner.Parent = resim
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(1, 0)
+    c.Parent = resim
 
     table.insert(yuzerResimler, {
         resim = resim,
@@ -163,54 +136,44 @@ local function yuzerResimOlustur(index)
     })
 end
 
-for i = 1, 10 do
-    yuzerResimOlustur(i)
-end
+for i = 1, 10 do yuzerResimOlustur() end
 
 task.spawn(function()
     local t = 0
     while gui.Parent do
         t = t + 0.03
-        for _, veri in ipairs(yuzerResimler) do
-            if veri.resim.Parent then
-                local xOff = math.sin(t * veri.hiz + veri.faz) * veri.genlik
-                local yOff = math.cos(t * veri.hiz * 0.8 + veri.faz) * veri.genlik
-                veri.resim.Position = UDim2.new(
-                    veri.baslangicPoz.X.Scale,
-                    veri.baslangicPoz.X.Offset + xOff,
-                    veri.baslangicPoz.Y.Scale,
-                    veri.baslangicPoz.Y.Offset + yOff
+        for _, v in ipairs(yuzerResimler) do
+            if v.resim.Parent then
+                local xOff = math.sin(t * v.hiz + v.faz) * v.genlik
+                local yOff = math.cos(t * v.hiz * 0.8 + v.faz) * v.genlik
+                v.resim.Position = UDim2.new(
+                    v.baslangicPoz.X.Scale, v.baslangicPoz.X.Offset + xOff,
+                    v.baslangicPoz.Y.Scale, v.baslangicPoz.Y.Offset + yOff
                 )
-                veri.resim.Rotation = veri.baslangicRot + math.sin(t * veri.donmeHizi) * 20
+                v.resim.Rotation = v.baslangicRot + math.sin(t * v.donmeHizi) * 20
             end
         end
         task.wait(0.03)
     end
 end)
 
--- ============================================
--- PARTİKÜL (yuvarlak)
--- ============================================
+-- PARTİKÜL
 local partikuller = {}
 
 local function partikulOlustur()
     local p = Instance.new("Frame")
     p.Size = UDim2.new(0, 15 + math.random(0, 15), 0, 15 + math.random(0, 15))
     p.Position = UDim2.new(math.random(), 0, 1.2, 0)
-    p.BackgroundColor3 = Color3.fromRGB(
-        math.random(150, 220),
-        math.random(180, 240),
-        255
-    )
+    p.BackgroundColor3 = Color3.fromRGB(math.random(150, 220), math.random(180, 240), 255)
     p.BackgroundTransparency = 0.6
     p.BorderSizePixel = 0
     p.ZIndex = 2
-    p.Rotation = math.random(0, 360)
+    p.Active = false
     p.Parent = main
 
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(1, 0)
-    corner.Parent = p
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(1, 0)
+    c.Parent = p
 
     local glow = Instance.new("Frame")
     glow.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -220,11 +183,12 @@ local function partikulOlustur()
     glow.BackgroundTransparency = 0.85
     glow.BorderSizePixel = 0
     glow.ZIndex = 1
+    glow.Active = false
     glow.Parent = p
 
-    local glowCorner = Instance.new("UICorner")
-    glowCorner.CornerRadius = UDim.new(1, 0)
-    glowCorner.Parent = glow
+    local gc = Instance.new("UICorner")
+    gc.CornerRadius = UDim.new(1, 0)
+    gc.Parent = glow
 
     table.insert(partikuller, {
         resim = p,
@@ -236,9 +200,7 @@ local function partikulOlustur()
     })
 end
 
-for i = 1, 15 do
-    partikulOlustur()
-end
+for i = 1, 15 do partikulOlustur() end
 
 task.spawn(function()
     while gui.Parent do
@@ -247,7 +209,6 @@ task.spawn(function()
             if v.resim.Parent then
                 v.yPoz = v.yPoz - v.hiz * 0.02
                 v.xPoz = v.xPoz + v.xDrift * 0.01
-
                 if v.yPoz < -0.3 then
                     v.resim:Destroy()
                     table.remove(partikuller, i)
@@ -262,25 +223,20 @@ task.spawn(function()
     end
 end)
 
--- ============================================
 -- KÜPLER VE ÜÇGENLER
--- ============================================
 local sekiller = {}
 
 local function kupOlustur()
     local k = Instance.new("Frame")
     k.Size = UDim2.new(0, 8 + math.random(0, 12), 0, 8 + math.random(0, 12))
     k.Position = UDim2.new(math.random(), 0, math.random(), 0)
-    k.BackgroundColor3 = Color3.fromRGB(
-        math.random(80, 200),
-        math.random(80, 200),
-        math.random(150, 255)
-    )
+    k.BackgroundColor3 = Color3.fromRGB(math.random(80, 200), math.random(80, 200), math.random(150, 255))
     k.BackgroundTransparency = 0.6
     k.BorderSizePixel = 1
     k.BorderColor3 = Color3.fromRGB(150, 200, 255)
     k.Rotation = math.random(0, 360)
     k.ZIndex = 2
+    k.Active = false
     k.Parent = main
 
     table.insert(sekiller, {
@@ -299,14 +255,11 @@ local function ucgenOlustur()
     u.Position = UDim2.new(math.random(), 0, math.random(), 0)
     u.BackgroundTransparency = 1
     u.Image = "rbxassetid://3926307971"
-    u.ImageColor3 = Color3.fromRGB(
-        math.random(100, 220),
-        math.random(100, 220),
-        math.random(180, 255)
-    )
+    u.ImageColor3 = Color3.fromRGB(math.random(100, 220), math.random(100, 220), math.random(180, 255))
     u.ImageTransparency = 0.6
     u.Rotation = math.random(0, 360)
     u.ZIndex = 2
+    u.Active = false
     u.Parent = main
 
     table.insert(sekiller, {
@@ -328,12 +281,10 @@ task.spawn(function()
             if v.resim.Parent then
                 v.xPoz = v.xPoz + v.xDrift * 0.01
                 v.yPoz = v.yPoz + v.yDrift * 0.01
-
                 if v.xPoz < -0.1 then v.xPoz = 1.1 end
                 if v.xPoz > 1.1 then v.xPoz = -0.1 end
                 if v.yPoz < -0.1 then v.yPoz = 1.1 end
                 if v.yPoz > 1.1 then v.yPoz = -0.1 end
-
                 v.resim.Position = UDim2.new(v.xPoz, 0, v.yPoz, 0)
                 v.resim.Rotation = v.resim.Rotation + v.rotHiz
             end
@@ -342,20 +293,19 @@ task.spawn(function()
     end
 end)
 
--- ============================================
 -- OVERLAY
--- ============================================
 local overlay = Instance.new("Frame")
 overlay.Size = UDim2.new(1, 0, 1, 0)
 overlay.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
 overlay.BackgroundTransparency = 0.65
 overlay.BorderSizePixel = 0
 overlay.ZIndex = 3
+overlay.Active = false
 overlay.Parent = main
 
-local overlayCorner = Instance.new("UICorner")
-overlayCorner.CornerRadius = UDim.new(0, 12)
-overlayCorner.Parent = overlay
+local ovC = Instance.new("UICorner")
+ovC.CornerRadius = UDim.new(0, 12)
+ovC.Parent = overlay
 
 local overlayGrad = Instance.new("UIGradient")
 overlayGrad.Rotation = 45
@@ -381,7 +331,6 @@ task.spawn(function()
     end
 end)
 
--- STROKE PULSE
 local mainStroke = Instance.new("UIStroke")
 mainStroke.Color = Color3.fromRGB(120, 120, 200)
 mainStroke.Thickness = 1.3
@@ -398,15 +347,14 @@ task.spawn(function()
     end
 end)
 
--- ============================================
--- TOP BAR
--- ============================================
+-- TOP BAR (DRAG DÜZELTİLDİ)
 local topBar = Instance.new("Frame")
 topBar.Size = UDim2.new(1, 0, 0, 32)
 topBar.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 topBar.BackgroundTransparency = 0.4
 topBar.BorderSizePixel = 0
 topBar.ZIndex = 5
+topBar.Active = false  -- tıklama main'e geçsin
 topBar.Parent = main
 
 local topBarCorner = Instance.new("UICorner")
@@ -420,6 +368,7 @@ topBarFix.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 topBarFix.BackgroundTransparency = 0.4
 topBarFix.BorderSizePixel = 0
 topBarFix.ZIndex = 5
+topBarFix.Active = false
 topBarFix.Parent = topBar
 
 local logoImg = Instance.new("ImageLabel")
@@ -429,41 +378,13 @@ logoImg.BackgroundTransparency = 1
 logoImg.Image = RESIM
 logoImg.ScaleType = Enum.ScaleType.Crop
 logoImg.ZIndex = 8
+logoImg.Active = false
 logoImg.ClipsDescendants = true
 logoImg.Parent = topBar
 
 local logoCorner = Instance.new("UICorner")
 logoCorner.CornerRadius = UDim.new(1, 0)
 logoCorner.Parent = logoImg
-
-local dotRing = Instance.new("Frame")
-dotRing.AnchorPoint = Vector2.new(0.5, 0.5)
-dotRing.Size = UDim2.new(0, 18, 0, 18)
-dotRing.Position = UDim2.new(0, 20, 0.5, 0)
-dotRing.BackgroundTransparency = 1
-dotRing.ZIndex = 6
-dotRing.Parent = topBar
-
-local dotRingCorner = Instance.new("UICorner")
-dotRingCorner.CornerRadius = UDim.new(1, 0)
-dotRingCorner.Parent = dotRing
-
-local dotRingStroke = Instance.new("UIStroke")
-dotRingStroke.Color = Color3.fromRGB(0, 220, 255)
-dotRingStroke.Thickness = 1.3
-dotRingStroke.Transparency = 0
-dotRingStroke.Parent = dotRing
-
-task.spawn(function()
-    local t = 0
-    while gui.Parent do
-        t = t + 0.03
-        local size = 18 + ((math.sin(t * 3) + 1) / 2) * 8
-        dotRing.Size = UDim2.new(0, size, 0, size)
-        dotRingStroke.Transparency = ((math.sin(t * 3) + 1) / 2) * 0.7
-        task.wait(0.03)
-    end
-end)
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -80, 1, 0)
@@ -475,6 +396,7 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 12
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.ZIndex = 10
+title.Active = false
 title.Parent = topBar
 
 local titleShadow = Instance.new("UIStroke")
@@ -493,7 +415,6 @@ minimizeBtn.TextColor3 = Color3.fromRGB(180, 180, 220)
 minimizeBtn.Font = Enum.Font.GothamBold
 minimizeBtn.TextSize = 16
 minimizeBtn.AutoButtonColor = false
-minimizeBtn.ClipsDescendants = true
 minimizeBtn.ZIndex = 10
 minimizeBtn.Parent = topBar
 
@@ -501,25 +422,13 @@ local minCorner = Instance.new("UICorner")
 minCorner.CornerRadius = UDim.new(0, 7)
 minCorner.Parent = minimizeBtn
 
-local minShine = Instance.new("ImageLabel")
-minShine.Size = UDim2.new(0, 20, 1, 0)
-minShine.Position = UDim2.new(-1, 0, 0, 0)
-minShine.BackgroundTransparency = 1
-minShine.Image = SHINE_RESIM
-minShine.ImageTransparency = 0.3
-minShine.Visible = false
-minShine.ZIndex = 11
-minShine.Parent = minimizeBtn
-
 minimizeBtn.MouseEnter:Connect(function()
     minimizeBtn.BackgroundTransparency = 0.6
-    minShine.Visible = true
-    minShine.Position = UDim2.new(-1, 0, 0, 0)
-    minShine:TweenPosition(UDim2.new(1, 0, 0, 0), "Quad", "Out", 0.5)
-    task.delay(0.6, function() minShine.Visible = false end)
+    minimizeBtn:TweenSize(UDim2.new(0, 27, 0, 27), "Quad", "Out", 0.15, true)
 end)
 minimizeBtn.MouseLeave:Connect(function()
     minimizeBtn.BackgroundTransparency = 0.92
+    minimizeBtn:TweenSize(UDim2.new(0, 24, 0, 24), "Quad", "Out", 0.15, true)
 end)
 
 local closeBtn = Instance.new("TextButton")
@@ -532,7 +441,6 @@ closeBtn.TextColor3 = Color3.fromRGB(255, 130, 130)
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 17
 closeBtn.AutoButtonColor = false
-closeBtn.ClipsDescendants = true
 closeBtn.ZIndex = 10
 closeBtn.Parent = topBar
 
@@ -540,40 +448,20 @@ local closeCorner = Instance.new("UICorner")
 closeCorner.CornerRadius = UDim.new(0, 7)
 closeCorner.Parent = closeBtn
 
-local closeStroke = Instance.new("UIStroke")
-closeStroke.Color = Color3.fromRGB(255, 130, 130)
-closeStroke.Transparency = 0.7
-closeStroke.Thickness = 1
-closeStroke.Parent = closeBtn
-
-local closeShine = Instance.new("ImageLabel")
-closeShine.Size = UDim2.new(0, 20, 1, 0)
-closeShine.Position = UDim2.new(-1, 0, 0, 0)
-closeShine.BackgroundTransparency = 1
-closeShine.Image = SHINE_RESIM
-closeShine.ImageTransparency = 0.3
-closeShine.Visible = false
-closeShine.ZIndex = 11
-closeShine.Parent = closeBtn
-
 closeBtn.MouseEnter:Connect(function()
     closeBtn.BackgroundTransparency = 0.6
     closeBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
     closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeShine.Visible = true
-    closeShine.Position = UDim2.new(-1, 0, 0, 0)
-    closeShine:TweenPosition(UDim2.new(1, 0, 0, 0), "Quad", "Out", 0.5)
-    task.delay(0.6, function() closeShine.Visible = false end)
+    closeBtn:TweenSize(UDim2.new(0, 27, 0, 27), "Quad", "Out", 0.15, true)
 end)
 closeBtn.MouseLeave:Connect(function()
     closeBtn.BackgroundTransparency = 0.92
     closeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     closeBtn.TextColor3 = Color3.fromRGB(255, 130, 130)
+    closeBtn:TweenSize(UDim2.new(0, 24, 0, 24), "Quad", "Out", 0.15, true)
 end)
 
--- ============================================
 -- STATUS BAR
--- ============================================
 local statusBar = Instance.new("Frame")
 statusBar.Size = UDim2.new(1, -20, 0, 28)
 statusBar.Position = UDim2.new(0, 10, 0, 40)
@@ -581,17 +469,12 @@ statusBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 statusBar.BackgroundTransparency = 0.9
 statusBar.BorderSizePixel = 0
 statusBar.ZIndex = 8
+statusBar.Active = false
 statusBar.Parent = main
 
 local statusCorner = Instance.new("UICorner")
 statusCorner.CornerRadius = UDim.new(0, 7)
 statusCorner.Parent = statusBar
-
-local statusStroke = Instance.new("UIStroke")
-statusStroke.Color = Color3.fromRGB(140, 140, 200)
-statusStroke.Transparency = 0.6
-statusStroke.Thickness = 1
-statusStroke.Parent = statusBar
 
 local statusDot = Instance.new("Frame")
 statusDot.Size = UDim2.new(0, 7, 0, 7)
@@ -599,6 +482,7 @@ statusDot.Position = UDim2.new(0, 10, 0.5, -3.5)
 statusDot.BackgroundColor3 = Color3.fromRGB(0, 255, 120)
 statusDot.BorderSizePixel = 0
 statusDot.ZIndex = 9
+statusDot.Active = false
 statusDot.Parent = statusBar
 
 local statusDotCorner = Instance.new("UICorner")
@@ -609,20 +493,19 @@ local statusText = Instance.new("TextLabel")
 statusText.Size = UDim2.new(1, -34, 1, 0)
 statusText.Position = UDim2.new(0, 24, 0, 0)
 statusText.BackgroundTransparency = 1
-statusText.Text = "Running..."
+statusText.Text = "Idle"
 statusText.TextColor3 = Color3.fromRGB(240, 240, 255)
 statusText.Font = Enum.Font.GothamMedium
 statusText.TextSize = 10
 statusText.TextXAlignment = Enum.TextXAlignment.Left
 statusText.ZIndex = 10
+statusText.Active = false
 statusText.Parent = statusBar
 
--- ============================================
--- BUTONLAR
--- ============================================
-local function makeButton(text, posX, widthScale, renk)
+-- BUTONLAR (JUICY HOVER)
+local function makeButton(text, posX, widthScale, renk, baseSize, bigSize)
     local b = Instance.new("TextButton")
-    b.Size = UDim2.new(widthScale, -14, 0, 30)
+    b.Size = baseSize
     b.Position = UDim2.new(0, posX, 0, 78)
     b.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     b.Text = ""
@@ -643,12 +526,13 @@ local function makeButton(text, posX, widthScale, renk)
     bgImg.ImageColor3 = renk
     bgImg.ScaleType = Enum.ScaleType.Crop
     bgImg.ZIndex = 9
+    bgImg.Active = false
     bgImg.ClipsDescendants = true
     bgImg.Parent = b
 
-    local bgImgCorner = Instance.new("UICorner")
-    bgImgCorner.CornerRadius = UDim.new(0, 8)
-    bgImgCorner.Parent = bgImg
+    local bgImgC = Instance.new("UICorner")
+    bgImgC.CornerRadius = UDim.new(0, 8)
+    bgImgC.Parent = bgImg
 
     local overlay2 = Instance.new("Frame")
     overlay2.Size = UDim2.new(1, 0, 1, 0)
@@ -656,11 +540,12 @@ local function makeButton(text, posX, widthScale, renk)
     overlay2.BackgroundTransparency = 0.5
     overlay2.BorderSizePixel = 0
     overlay2.ZIndex = 9
+    overlay2.Active = false
     overlay2.Parent = b
 
-    local ov2Corner = Instance.new("UICorner")
-    ov2Corner.CornerRadius = UDim.new(0, 8)
-    ov2Corner.Parent = overlay2
+    local ov2C = Instance.new("UICorner")
+    ov2C.CornerRadius = UDim.new(0, 8)
+    ov2C.Parent = overlay2
 
     local shine = Instance.new("ImageLabel")
     shine.Size = UDim2.new(0, 40, 1, 0)
@@ -670,13 +555,8 @@ local function makeButton(text, posX, widthScale, renk)
     shine.ImageTransparency = 0.2
     shine.ZIndex = 11
     shine.Visible = false
+    shine.Active = false
     shine.Parent = b
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(255, 255, 255)
-    stroke.Transparency = 0.7
-    stroke.Thickness = 1
-    stroke.Parent = b
 
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(1, 0, 1, 0)
@@ -686,13 +566,8 @@ local function makeButton(text, posX, widthScale, renk)
     lbl.Font = Enum.Font.GothamBold
     lbl.TextSize = 10
     lbl.ZIndex = 10
+    lbl.Active = false
     lbl.Parent = b
-
-    local lblShadow = Instance.new("UIStroke")
-    lblShadow.Color = Color3.fromRGB(0, 0, 0)
-    lblShadow.Transparency = 0.4
-    lblShadow.Thickness = 1
-    lblShadow.Parent = lbl
 
     b.MouseEnter:Connect(function()
         bgImg.ImageColor3 = Color3.fromRGB(
@@ -700,6 +575,11 @@ local function makeButton(text, posX, widthScale, renk)
             math.min(255, renk.G * 255 + 50),
             math.min(255, renk.B * 255 + 50)
         )
+        -- Juicy: butonu büyüt
+        b:TweenSize(bigSize, "Back", "Out", 0.2, true)
+        b:TweenPosition(UDim2.new(0, posX - 2, 0, 76), "Back", "Out", 0.2, true)
+
+        -- Shine
         shine.Visible = true
         shine.Position = UDim2.new(-1, 0, 0, 0)
         shine:TweenPosition(UDim2.new(1, 0, 0, 0), "Quad", "Out", 0.6)
@@ -707,48 +587,111 @@ local function makeButton(text, posX, widthScale, renk)
     end)
     b.MouseLeave:Connect(function()
         bgImg.ImageColor3 = renk
+        -- Geri eski boyuta
+        b:TweenSize(baseSize, "Quad", "Out", 0.2, true)
+        b:TweenPosition(UDim2.new(0, posX, 0, 78), "Quad", "Out", 0.2, true)
     end)
 
-    return b, lbl, bgImg, overlay2
+    return b, lbl, bgImg
 end
 
-local startBtn = makeButton("START", 10, 0.5, Color3.fromRGB(60, 200, 100))
-local stopBtn = makeButton("STOP", 10 + 108, 0.5, Color3.fromRGB(200, 60, 80))
+local startBtn = makeButton("START", 10, 0.5, Color3.fromRGB(60, 200, 100),
+    UDim2.new(0.5, -14, 0, 30),
+    UDim2.new(0.5, -10, 0, 34)
+)
+local stopBtn = makeButton("STOP", 10 + 108, 0.5, Color3.fromRGB(200, 60, 80),
+    UDim2.new(0.5, -14, 0, 30),
+    UDim2.new(0.5, -10, 0, 34)
+)
 
 -- ============================================
--- WALK LOGIC
+-- MAINPART KONTROLÜ
 -- ============================================
-local function updateStatus(txt, color)
+local function mainPartKontrol()
+    local mainPart = workspace:FindFirstChild("MainPart")
+    if not mainPart then return false end
+
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local mesafe = (part.Position - mainPart.Position).Magnitude
+            local temasMesafesi = (part.Size.Magnitude / 2) + (mainPart.Size.Magnitude / 2) + 2
+            if mesafe < temasMesafesi then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- ============================================
+-- STATUS
+-- ============================================
+local function setStatus(txt, color)
     statusText.Text = txt
     statusDot.BackgroundColor3 = color
 end
 
+-- ============================================
+-- WALK LOGIC
+-- ============================================
 local function durdur()
     hum:MoveTo(hrp.Position)
     hum:Move(Vector3.zero, false)
 end
 
 local function yuru()
-    if not getgenv().calisiyor then return end
+    while getgenv().calisiyor do
+        if not char.Parent or hum.Health <= 0 then break end
 
-    updateStatus("Walking to start...", Color3.fromRGB(255, 200, 0))
-    while char.Parent and hum.Health > 0 and getgenv().calisiyor do
-        if (hrp.Position - baslangic).Magnitude < 3 then break end
-        hum:MoveTo(baslangic)
-        task.wait(0.1)
-    end
+        -- 1) Başlangıca yürü
+        while char.Parent and hum.Health > 0 and getgenv().calisiyor do
+            if (hrp.Position - baslangic).Magnitude < 3 then break end
+            hum:MoveTo(baslangic)
+            task.wait(0.1)
+        end
 
-    if not getgenv().calisiyor then return end
+        if not getgenv().calisiyor then break end
 
-    updateStatus("Walking to finish...", Color3.fromRGB(0, 200, 255))
-    while char.Parent and hum.Health > 0 and getgenv().calisiyor do
-        if (hrp.Position - bitis).Magnitude < 3 then break end
-        hum:MoveTo(bitis)
-        task.wait(0.1)
-    end
+        -- 2) Yürüme + 5sn sonra sürekli MainPart kontrolü
+        local yurumeDevam = true
+        local mainPartDegdi = false
 
-    if getgenv().calisiyor and (hrp.Position - bitis).Magnitude < 3 then
-        updateStatus("Finished!", Color3.fromRGB(0, 255, 120))
+        task.spawn(function()
+            while yurumeDevam and getgenv().calisiyor do
+                if not char.Parent or hum.Health <= 0 then break end
+                if (hrp.Position - bitis).Magnitude < 3 then break end
+                hum:MoveTo(bitis)
+                task.wait(0.1)
+            end
+        end)
+
+        -- 5 saniye bekle (yürürken)
+        local beklemeSayaci = 0
+        while beklemeSayaci < 5 and yurumeDevam and getgenv().calisiyor do
+            task.wait(0.5)
+            beklemeSayaci = beklemeSayaci + 0.5
+        end
+
+        if not getgenv().calisiyor then break end
+
+        -- 3) 5sn sonra SÜREKLİ MainPart kontrolü
+        while yurumeDevam and getgenv().calisiyor do
+            if not char.Parent or hum.Health <= 0 then break end
+
+            if mainPartKontrol() then
+                mainPartDegdi = true
+                yurumeDevam = false
+                break
+            end
+
+            if (hrp.Position - bitis).Magnitude < 3 then break end
+            task.wait(0.2)
+        end
+
+        if not getgenv().calisiyor then break end
+
+        -- 4) Başa dön
+        task.wait(0.3)
     end
 end
 
@@ -759,7 +702,7 @@ startBtn.MouseButton1Click:Connect(function()
     tikSesi()
     if getgenv().calisiyor then return end
     getgenv().calisiyor = true
-    updateStatus("Running...", Color3.fromRGB(0, 255, 120))
+    setStatus("Started...", Color3.fromRGB(0, 255, 120))
     task.spawn(yuru)
 end)
 
@@ -767,7 +710,7 @@ stopBtn.MouseButton1Click:Connect(function()
     tikSesi()
     getgenv().calisiyor = false
     durdur()
-    updateStatus("Stopped", Color3.fromRGB(255, 200, 0))
+    setStatus("Stopped", Color3.fromRGB(255, 80, 80))
 end)
 
 minimizeBtn.MouseButton1Click:Connect(function()
@@ -781,7 +724,6 @@ closeBtn.MouseButton1Click:Connect(function()
     getgenv().calisiyor = false
     durdur()
     gui:Destroy()
-    print("[AutoWalk] GUI destroyed.")
 end)
 
 toggleBtn.MouseButton1Click:Connect(function()
@@ -791,27 +733,7 @@ toggleBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ============================================
--- TOUCH TRIGGER
--- ============================================
-local tetikleyici = workspace:FindFirstChild("3d1a6fb4-dab3-4856-8718-c2ba2c7bc26b", true)
-if tetikleyici then
-    tetikleyici.Touched:Connect(function(hit)
-        if hit.Parent == char then
-            getgenv().calisiyor = false
-            durdur()
-            task.wait(0.2)
-            getgenv().calisiyor = true
-            updateStatus("Triggered, restarting...", Color3.fromRGB(0, 200, 255))
-            task.spawn(yuru)
-        end
-    end)
-else
-    warn("[AutoWalk] Trigger part not found.")
-end
-
--- ============================================
 -- BAŞLAT
 -- ============================================
 task.spawn(yuru)
 print("[AutoWalk] Script loaded.")
-
