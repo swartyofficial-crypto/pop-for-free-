@@ -1,6 +1,5 @@
 -- ============================================
--- AUTO WALK + MAINPART CHECK + GUI (v26)
--- Fountain modeli silinir + drag düzeltildi + juicy hover
+-- AUTO WALK + MAINPART CHECK + GUI + NOCLIP (v27)
 -- ============================================
 
 local player = game.Players.LocalPlayer
@@ -10,25 +9,16 @@ local hrp = char:WaitForChild("HumanoidRootPart")
 
 local baslangic = Vector3.new(124.94, 1.84, -94.24)
 local bitis = Vector3.new(123.41, 1.27, -2190.34)
--- ============================================
--- NOCLIP (script başlar başlamaz aktif)
--- ============================================
 
-local player = game.Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-
--- Yeni karakter gelirse tekrar uygula
+-- ============================================
+-- NOCLIP
+-- ============================================
 player.CharacterAdded:Connect(function(newChar)
     char = newChar
-    task.wait(0.5)
-    for _, part in ipairs(char:GetDescendants()) do
-        if part:IsA("BasePart") and part.CanCollide then
-            part.CanCollide = false
-        end
-    end
+    hum = newChar:WaitForChild("Humanoid")
+    hrp = newChar:WaitForChild("HumanoidRootPart")
 end)
 
--- Sürekli kontrol (yeni part eklenirse)
 task.spawn(function()
     while true do
         if char and char.Parent then
@@ -43,6 +33,7 @@ task.spawn(function()
 end)
 
 print("[Noclip] Aktif")
+
 -- ============================================
 -- FOUNTAIN SİL (model)
 -- ============================================
@@ -55,13 +46,11 @@ local function fountainSil()
             print("[AutoWalk] Better Low Poly Fountain > Fountain silindi.")
             return
         end
-        -- Fountain alt elemanı yoksa, modelin kendisini sil
         anaModel:Destroy()
         print("[AutoWalk] Better Low Poly Fountain (tam model) silindi.")
         return
     end
 
-    -- Recursive ara
     local bulundu = workspace:FindFirstChild("Fountain", true)
     if bulundu then
         bulundu:Destroy()
@@ -410,7 +399,7 @@ task.spawn(function()
     end
 end)
 
--- TOP BAR (DRAG İÇİN ACTIVE FALSE)
+-- TOP BAR
 local topBar = Instance.new("Frame")
 topBar.Size = UDim2.new(1, 0, 0, 32)
 topBar.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
