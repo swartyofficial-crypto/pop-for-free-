@@ -1,5 +1,6 @@
 -- ============================================
--- AUTO WALK + TOUCH RESTART + GUI (v10)
+-- AUTO WALK + TOUCH RESTART + GUI (v16)
+-- Yüzen resimler: yuvarlak kırpılmış (kare kenar yok)
 -- ============================================
 
 local player = game.Players.LocalPlayer
@@ -14,6 +15,9 @@ getgenv().calisiyor = true
 
 local RESIM = "rbxassetid://64382707"
 local BUTON_RESIM = "rbxassetid://6927295847"
+local TOGGLE_RESIM = "rbxassetid://73745881790792"
+local SHINE_RESIM = "rbxassetid://159602101"
+local SES_ID = "rbxassetid://122835655736085"
 
 -- ============================================
 -- GUI
@@ -25,15 +29,27 @@ gui.IgnoreGuiInset = true
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = player:WaitForChild("PlayerGui")
 
+-- SES
+local ses = Instance.new("Sound")
+ses.SoundId = SES_ID
+ses.Volume = 0.5
+ses.Parent = gui
+
+local function tikSesi()
+    local s = ses:Clone()
+    s.Parent = gui
+    s:Play()
+    task.delay(2, function() s:Destroy() end)
+end
+
 -- ============================================
 -- TOGGLE BUTTON
 -- ============================================
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Name = "ToggleBtn"
-toggleBtn.Size = UDim2.new(0, 54, 0, 54)
-toggleBtn.Position = UDim2.new(0, 30, 0, 30)
+toggleBtn.Size = UDim2.new(0, 42, 0, 42)
+toggleBtn.Position = UDim2.new(0, 24, 0, 24)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-toggleBtn.BackgroundTransparency = 0
 toggleBtn.Text = ""
 toggleBtn.AutoButtonColor = false
 toggleBtn.BorderSizePixel = 0
@@ -49,15 +65,14 @@ toggleCorner.Parent = toggleBtn
 
 local toggleStroke = Instance.new("UIStroke")
 toggleStroke.Color = Color3.fromRGB(0, 220, 255)
-toggleStroke.Thickness = 2
+toggleStroke.Thickness = 1.8
 toggleStroke.Transparency = 0.2
 toggleStroke.Parent = toggleBtn
 
 local toggleImg = Instance.new("ImageLabel")
 toggleImg.Size = UDim2.new(1, 0, 1, 0)
 toggleImg.BackgroundTransparency = 1
-toggleImg.Image = RESIM
-toggleImg.ImageColor3 = Color3.fromRGB(255, 255, 255)
+toggleImg.Image = TOGGLE_RESIM
 toggleImg.ScaleType = Enum.ScaleType.Crop
 toggleImg.ZIndex = 2
 toggleImg.ClipsDescendants = true
@@ -67,13 +82,27 @@ local toggleImgCorner = Instance.new("UICorner")
 toggleImgCorner.CornerRadius = UDim.new(1, 0)
 toggleImgCorner.Parent = toggleImg
 
+local toggleShine = Instance.new("ImageLabel")
+toggleShine.Size = UDim2.new(0, 30, 1, 0)
+toggleShine.Position = UDim2.new(-1, 0, 0, 0)
+toggleShine.BackgroundTransparency = 1
+toggleShine.Image = SHINE_RESIM
+toggleShine.ImageTransparency = 0.3
+toggleShine.ZIndex = 3
+toggleShine.Visible = false
+toggleShine.Parent = toggleBtn
+
 toggleBtn.MouseEnter:Connect(function()
     toggleStroke.Transparency = 0
-    toggleStroke.Thickness = 2.5
+    toggleStroke.Thickness = 2.2
+    toggleShine.Visible = true
+    toggleShine.Position = UDim2.new(-1, 0, 0, 0)
+    toggleShine:TweenPosition(UDim2.new(1, 0, 0, 0), "Quad", "Out", 0.6)
+    task.delay(0.7, function() toggleShine.Visible = false end)
 end)
 toggleBtn.MouseLeave:Connect(function()
     toggleStroke.Transparency = 0.2
-    toggleStroke.Thickness = 2
+    toggleStroke.Thickness = 1.8
 end)
 
 -- ============================================
@@ -81,8 +110,8 @@ end)
 -- ============================================
 local main = Instance.new("Frame")
 main.Name = "Main"
-main.Size = UDim2.new(0, 280, 0, 175)
-main.Position = UDim2.new(0, 90, 0, 30)
+main.Size = UDim2.new(0, 220, 0, 140)
+main.Position = UDim2.new(0, 72, 0, 24)
 main.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
 main.BorderSizePixel = 0
 main.Active = true
@@ -92,39 +121,41 @@ main.Visible = true
 main.Parent = gui
 
 local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 14)
+mainCorner.CornerRadius = UDim.new(0, 12)
 mainCorner.Parent = main
 
--- 10 FLOATING IMAGES
+-- ============================================
+-- 10 YÜZEN RESİM (YUVARLAK KIRPILMIŞ)
+-- ============================================
 local yuzerResimler = {}
 
 local function yuzerResimOlustur(index)
     local resim = Instance.new("ImageLabel")
     resim.Name = "Float" .. index
-    resim.Size = UDim2.new(0, 40 + math.random(20, 60), 0, 40 + math.random(20, 60))
+    resim.Size = UDim2.new(0, 30 + math.random(15, 40), 0, 30 + math.random(15, 40))
     resim.Position = UDim2.new(
         math.random() * 1,
-        math.random(-30, 30),
+        math.random(-20, 20),
         math.random() * 1,
-        math.random(-30, 30)
+        math.random(-20, 20)
     )
     resim.BackgroundTransparency = 1
     resim.Image = RESIM
-    resim.ImageColor3 = Color3.fromRGB(255, 255, 255)
-    resim.ImageTransparency = 0.7 + math.random() * 0.2
-    resim.ScaleType = Enum.ScaleType.Fit
+    resim.ImageTransparency = 0.75 + math.random() * 0.15
+    resim.ScaleType = Enum.ScaleType.Crop  -- daireyi doldursun
     resim.ZIndex = 2
     resim.Rotation = math.random(-30, 30)
+    resim.ClipsDescendants = true  -- kare kenarları kes
     resim.Parent = main
 
     local rCorner = Instance.new("UICorner")
-    rCorner.CornerRadius = UDim.new(1, 0)
+    rCorner.CornerRadius = UDim.new(1, 0)  -- tam yuvarlak
     rCorner.Parent = resim
 
     table.insert(yuzerResimler, {
         resim = resim,
         hiz = 0.5 + math.random() * 1.5,
-        genlik = 15 + math.random() * 30,
+        genlik = 12 + math.random() * 22,
         faz = math.random() * math.pi * 2,
         baslangicPoz = resim.Position,
         donmeHizi = (math.random() - 0.5) * 3,
@@ -157,17 +188,173 @@ task.spawn(function()
     end
 end)
 
+-- ============================================
+-- PARTİKÜL (yuvarlak)
+-- ============================================
+local partikuller = {}
+
+local function partikulOlustur()
+    local p = Instance.new("Frame")
+    p.Size = UDim2.new(0, 15 + math.random(0, 15), 0, 15 + math.random(0, 15))
+    p.Position = UDim2.new(math.random(), 0, 1.2, 0)
+    p.BackgroundColor3 = Color3.fromRGB(
+        math.random(150, 220),
+        math.random(180, 240),
+        255
+    )
+    p.BackgroundTransparency = 0.6
+    p.BorderSizePixel = 0
+    p.ZIndex = 2
+    p.Rotation = math.random(0, 360)
+    p.Parent = main
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = p
+
+    local glow = Instance.new("Frame")
+    glow.AnchorPoint = Vector2.new(0.5, 0.5)
+    glow.Size = UDim2.new(1.8, 0, 1.8, 0)
+    glow.Position = UDim2.new(0.5, 0, 0.5, 0)
+    glow.BackgroundColor3 = p.BackgroundColor3
+    glow.BackgroundTransparency = 0.85
+    glow.BorderSizePixel = 0
+    glow.ZIndex = 1
+    glow.Parent = p
+
+    local glowCorner = Instance.new("UICorner")
+    glowCorner.CornerRadius = UDim.new(1, 0)
+    glowCorner.Parent = glow
+
+    table.insert(partikuller, {
+        resim = p,
+        hiz = 0.8 + math.random() * 1.5,
+        xDrift = (math.random() - 0.5) * 0.3,
+        rotHiz = (math.random() - 0.5) * 4,
+        yPoz = 1.2,
+        xPoz = math.random(),
+    })
+end
+
+for i = 1, 15 do
+    partikulOlustur()
+end
+
+task.spawn(function()
+    while gui.Parent do
+        for i = #partikuller, 1, -1 do
+            local v = partikuller[i]
+            if v.resim.Parent then
+                v.yPoz = v.yPoz - v.hiz * 0.02
+                v.xPoz = v.xPoz + v.xDrift * 0.01
+
+                if v.yPoz < -0.3 then
+                    v.resim:Destroy()
+                    table.remove(partikuller, i)
+                    partikulOlustur()
+                else
+                    v.resim.Position = UDim2.new(v.xPoz, 0, v.yPoz, 0)
+                    v.resim.Rotation = v.resim.Rotation + v.rotHiz
+                end
+            end
+        end
+        task.wait(0.03)
+    end
+end)
+
+-- ============================================
+-- KÜPLER VE ÜÇGENLER
+-- ============================================
+local sekiller = {}
+
+local function kupOlustur()
+    local k = Instance.new("Frame")
+    k.Size = UDim2.new(0, 8 + math.random(0, 12), 0, 8 + math.random(0, 12))
+    k.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    k.BackgroundColor3 = Color3.fromRGB(
+        math.random(80, 200),
+        math.random(80, 200),
+        math.random(150, 255)
+    )
+    k.BackgroundTransparency = 0.6
+    k.BorderSizePixel = 1
+    k.BorderColor3 = Color3.fromRGB(150, 200, 255)
+    k.Rotation = math.random(0, 360)
+    k.ZIndex = 2
+    k.Parent = main
+
+    table.insert(sekiller, {
+        resim = k,
+        xPoz = k.Position.X.Scale,
+        yPoz = k.Position.Y.Scale,
+        xDrift = (math.random() - 0.5) * 0.05,
+        yDrift = (math.random() - 0.5) * 0.05,
+        rotHiz = (math.random() - 0.5) * 2,
+    })
+end
+
+local function ucgenOlustur()
+    local u = Instance.new("ImageLabel")
+    u.Size = UDim2.new(0, 10 + math.random(0, 14), 0, 10 + math.random(0, 14))
+    u.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    u.BackgroundTransparency = 1
+    u.Image = "rbxassetid://3926307971"
+    u.ImageColor3 = Color3.fromRGB(
+        math.random(100, 220),
+        math.random(100, 220),
+        math.random(180, 255)
+    )
+    u.ImageTransparency = 0.6
+    u.Rotation = math.random(0, 360)
+    u.ZIndex = 2
+    u.Parent = main
+
+    table.insert(sekiller, {
+        resim = u,
+        xPoz = u.Position.X.Scale,
+        yPoz = u.Position.Y.Scale,
+        xDrift = (math.random() - 0.5) * 0.05,
+        yDrift = (math.random() - 0.5) * 0.05,
+        rotHiz = (math.random() - 0.5) * 2,
+    })
+end
+
+for i = 1, 5 do kupOlustur() end
+for i = 1, 5 do ucgenOlustur() end
+
+task.spawn(function()
+    while gui.Parent do
+        for _, v in ipairs(sekiller) do
+            if v.resim.Parent then
+                v.xPoz = v.xPoz + v.xDrift * 0.01
+                v.yPoz = v.yPoz + v.yDrift * 0.01
+
+                if v.xPoz < -0.1 then v.xPoz = 1.1 end
+                if v.xPoz > 1.1 then v.xPoz = -0.1 end
+                if v.yPoz < -0.1 then v.yPoz = 1.1 end
+                if v.yPoz > 1.1 then v.yPoz = -0.1 end
+
+                v.resim.Position = UDim2.new(v.xPoz, 0, v.yPoz, 0)
+                v.resim.Rotation = v.resim.Rotation + v.rotHiz
+            end
+        end
+        task.wait(0.03)
+    end
+end)
+
+-- ============================================
 -- OVERLAY
+-- ============================================
 local overlay = Instance.new("Frame")
 overlay.Size = UDim2.new(1, 0, 1, 0)
 overlay.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
-overlay.BackgroundTransparency = 0.55
+overlay.BackgroundTransparency = 0.65
 overlay.BorderSizePixel = 0
 overlay.ZIndex = 3
 overlay.Parent = main
 
 local overlayCorner = Instance.new("UICorner")
-overlayCorner.CornerRadius = UDim.new(0, 14)
+overlayCorner.CornerRadius = UDim.new(0, 12)
 overlayCorner.Parent = overlay
 
 local overlayGrad = Instance.new("UIGradient")
@@ -178,9 +365,9 @@ overlayGrad.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(1.00, Color3.fromRGB(10, 20, 45)),
 })
 overlayGrad.Transparency = NumberSequence.new({
-    NumberSequenceKeypoint.new(0, 0.3),
-    NumberSequenceKeypoint.new(0.5, 0.5),
-    NumberSequenceKeypoint.new(1, 0.3),
+    NumberSequenceKeypoint.new(0, 0.5),
+    NumberSequenceKeypoint.new(0.5, 0.7),
+    NumberSequenceKeypoint.new(1, 0.5),
 })
 overlayGrad.Parent = overlay
 
@@ -197,7 +384,7 @@ end)
 -- STROKE PULSE
 local mainStroke = Instance.new("UIStroke")
 mainStroke.Color = Color3.fromRGB(120, 120, 200)
-mainStroke.Thickness = 1.5
+mainStroke.Thickness = 1.3
 mainStroke.Transparency = 0.3
 mainStroke.Parent = main
 
@@ -211,9 +398,11 @@ task.spawn(function()
     end
 end)
 
+-- ============================================
 -- TOP BAR
+-- ============================================
 local topBar = Instance.new("Frame")
-topBar.Size = UDim2.new(1, 0, 0, 40)
+topBar.Size = UDim2.new(1, 0, 0, 32)
 topBar.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 topBar.BackgroundTransparency = 0.4
 topBar.BorderSizePixel = 0
@@ -221,12 +410,12 @@ topBar.ZIndex = 5
 topBar.Parent = main
 
 local topBarCorner = Instance.new("UICorner")
-topBarCorner.CornerRadius = UDim.new(0, 14)
+topBarCorner.CornerRadius = UDim.new(0, 12)
 topBarCorner.Parent = topBar
 
 local topBarFix = Instance.new("Frame")
-topBarFix.Size = UDim2.new(1, 0, 0, 14)
-topBarFix.Position = UDim2.new(0, 0, 1, -14)
+topBarFix.Size = UDim2.new(1, 0, 0, 12)
+topBarFix.Position = UDim2.new(0, 0, 1, -12)
 topBarFix.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 topBarFix.BackgroundTransparency = 0.4
 topBarFix.BorderSizePixel = 0
@@ -234,11 +423,10 @@ topBarFix.ZIndex = 5
 topBarFix.Parent = topBar
 
 local logoImg = Instance.new("ImageLabel")
-logoImg.Size = UDim2.new(0, 22, 0, 22)
-logoImg.Position = UDim2.new(0, 14, 0.5, -11)
+logoImg.Size = UDim2.new(0, 18, 0, 18)
+logoImg.Position = UDim2.new(0, 11, 0.5, -9)
 logoImg.BackgroundTransparency = 1
 logoImg.Image = RESIM
-logoImg.ImageColor3 = Color3.fromRGB(255, 255, 255)
 logoImg.ScaleType = Enum.ScaleType.Crop
 logoImg.ZIndex = 8
 logoImg.ClipsDescendants = true
@@ -250,8 +438,8 @@ logoCorner.Parent = logoImg
 
 local dotRing = Instance.new("Frame")
 dotRing.AnchorPoint = Vector2.new(0.5, 0.5)
-dotRing.Size = UDim2.new(0, 22, 0, 22)
-dotRing.Position = UDim2.new(0, 25, 0.5, 0)
+dotRing.Size = UDim2.new(0, 18, 0, 18)
+dotRing.Position = UDim2.new(0, 20, 0.5, 0)
 dotRing.BackgroundTransparency = 1
 dotRing.ZIndex = 6
 dotRing.Parent = topBar
@@ -262,7 +450,7 @@ dotRingCorner.Parent = dotRing
 
 local dotRingStroke = Instance.new("UIStroke")
 dotRingStroke.Color = Color3.fromRGB(0, 220, 255)
-dotRingStroke.Thickness = 1.5
+dotRingStroke.Thickness = 1.3
 dotRingStroke.Transparency = 0
 dotRingStroke.Parent = dotRing
 
@@ -270,7 +458,7 @@ task.spawn(function()
     local t = 0
     while gui.Parent do
         t = t + 0.03
-        local size = 22 + ((math.sin(t * 3) + 1) / 2) * 10
+        local size = 18 + ((math.sin(t * 3) + 1) / 2) * 8
         dotRing.Size = UDim2.new(0, size, 0, size)
         dotRingStroke.Transparency = ((math.sin(t * 3) + 1) / 2) * 0.7
         task.wait(0.03)
@@ -278,13 +466,13 @@ task.spawn(function()
 end)
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -100, 1, 0)
-title.Position = UDim2.new(0, 44, 0, 0)
+title.Size = UDim2.new(1, -80, 1, 0)
+title.Position = UDim2.new(0, 36, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "AUTO  WALK"
+title.Text = "AUTO WALK"
 title.TextColor3 = Color3.fromRGB(240, 240, 255)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 15
+title.TextSize = 12
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.ZIndex = 10
 title.Parent = topBar
@@ -296,44 +484,60 @@ titleShadow.Thickness = 1
 titleShadow.Parent = title
 
 local minimizeBtn = Instance.new("TextButton")
-minimizeBtn.Size = UDim2.new(0, 28, 0, 28)
-minimizeBtn.Position = UDim2.new(1, -70, 0.5, -14)
+minimizeBtn.Size = UDim2.new(0, 24, 0, 24)
+minimizeBtn.Position = UDim2.new(1, -58, 0.5, -12)
 minimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 minimizeBtn.BackgroundTransparency = 0.92
 minimizeBtn.Text = "−"
 minimizeBtn.TextColor3 = Color3.fromRGB(180, 180, 220)
 minimizeBtn.Font = Enum.Font.GothamBold
-minimizeBtn.TextSize = 20
+minimizeBtn.TextSize = 16
 minimizeBtn.AutoButtonColor = false
+minimizeBtn.ClipsDescendants = true
 minimizeBtn.ZIndex = 10
 minimizeBtn.Parent = topBar
 
 local minCorner = Instance.new("UICorner")
-minCorner.CornerRadius = UDim.new(0, 9)
+minCorner.CornerRadius = UDim.new(0, 7)
 minCorner.Parent = minimizeBtn
+
+local minShine = Instance.new("ImageLabel")
+minShine.Size = UDim2.new(0, 20, 1, 0)
+minShine.Position = UDim2.new(-1, 0, 0, 0)
+minShine.BackgroundTransparency = 1
+minShine.Image = SHINE_RESIM
+minShine.ImageTransparency = 0.3
+minShine.Visible = false
+minShine.ZIndex = 11
+minShine.Parent = minimizeBtn
 
 minimizeBtn.MouseEnter:Connect(function()
     minimizeBtn.BackgroundTransparency = 0.6
+    minShine.Visible = true
+    minShine.Position = UDim2.new(-1, 0, 0, 0)
+    minShine:TweenPosition(UDim2.new(1, 0, 0, 0), "Quad", "Out", 0.5)
+    task.delay(0.6, function() minShine.Visible = false end)
 end)
 minimizeBtn.MouseLeave:Connect(function()
     minimizeBtn.BackgroundTransparency = 0.92
 end)
 
 local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 28, 0, 28)
-closeBtn.Position = UDim2.new(1, -38, 0.5, -14)
+closeBtn.Size = UDim2.new(0, 24, 0, 24)
+closeBtn.Position = UDim2.new(1, -30, 0.5, -12)
 closeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 closeBtn.BackgroundTransparency = 0.92
 closeBtn.Text = "×"
 closeBtn.TextColor3 = Color3.fromRGB(255, 130, 130)
 closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 22
+closeBtn.TextSize = 17
 closeBtn.AutoButtonColor = false
+closeBtn.ClipsDescendants = true
 closeBtn.ZIndex = 10
 closeBtn.Parent = topBar
 
 local closeCorner = Instance.new("UICorner")
-closeCorner.CornerRadius = UDim.new(0, 9)
+closeCorner.CornerRadius = UDim.new(0, 7)
 closeCorner.Parent = closeBtn
 
 local closeStroke = Instance.new("UIStroke")
@@ -342,10 +546,24 @@ closeStroke.Transparency = 0.7
 closeStroke.Thickness = 1
 closeStroke.Parent = closeBtn
 
+local closeShine = Instance.new("ImageLabel")
+closeShine.Size = UDim2.new(0, 20, 1, 0)
+closeShine.Position = UDim2.new(-1, 0, 0, 0)
+closeShine.BackgroundTransparency = 1
+closeShine.Image = SHINE_RESIM
+closeShine.ImageTransparency = 0.3
+closeShine.Visible = false
+closeShine.ZIndex = 11
+closeShine.Parent = closeBtn
+
 closeBtn.MouseEnter:Connect(function()
     closeBtn.BackgroundTransparency = 0.6
     closeBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
     closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeShine.Visible = true
+    closeShine.Position = UDim2.new(-1, 0, 0, 0)
+    closeShine:TweenPosition(UDim2.new(1, 0, 0, 0), "Quad", "Out", 0.5)
+    task.delay(0.6, function() closeShine.Visible = false end)
 end)
 closeBtn.MouseLeave:Connect(function()
     closeBtn.BackgroundTransparency = 0.92
@@ -357,8 +575,8 @@ end)
 -- STATUS BAR
 -- ============================================
 local statusBar = Instance.new("Frame")
-statusBar.Size = UDim2.new(1, -24, 0, 36)
-statusBar.Position = UDim2.new(0, 12, 0, 50)
+statusBar.Size = UDim2.new(1, -20, 0, 28)
+statusBar.Position = UDim2.new(0, 10, 0, 40)
 statusBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 statusBar.BackgroundTransparency = 0.9
 statusBar.BorderSizePixel = 0
@@ -366,7 +584,7 @@ statusBar.ZIndex = 8
 statusBar.Parent = main
 
 local statusCorner = Instance.new("UICorner")
-statusCorner.CornerRadius = UDim.new(0, 9)
+statusCorner.CornerRadius = UDim.new(0, 7)
 statusCorner.Parent = statusBar
 
 local statusStroke = Instance.new("UIStroke")
@@ -376,8 +594,8 @@ statusStroke.Thickness = 1
 statusStroke.Parent = statusBar
 
 local statusDot = Instance.new("Frame")
-statusDot.Size = UDim2.new(0, 8, 0, 8)
-statusDot.Position = UDim2.new(0, 12, 0.5, -4)
+statusDot.Size = UDim2.new(0, 7, 0, 7)
+statusDot.Position = UDim2.new(0, 10, 0.5, -3.5)
 statusDot.BackgroundColor3 = Color3.fromRGB(0, 255, 120)
 statusDot.BorderSizePixel = 0
 statusDot.ZIndex = 9
@@ -388,24 +606,24 @@ statusDotCorner.CornerRadius = UDim.new(1, 0)
 statusDotCorner.Parent = statusDot
 
 local statusText = Instance.new("TextLabel")
-statusText.Size = UDim2.new(1, -40, 1, 0)
-statusText.Position = UDim2.new(0, 28, 0, 0)
+statusText.Size = UDim2.new(1, -34, 1, 0)
+statusText.Position = UDim2.new(0, 24, 0, 0)
 statusText.BackgroundTransparency = 1
 statusText.Text = "Running..."
 statusText.TextColor3 = Color3.fromRGB(240, 240, 255)
 statusText.Font = Enum.Font.GothamMedium
-statusText.TextSize = 12
+statusText.TextSize = 10
 statusText.TextXAlignment = Enum.TextXAlignment.Left
 statusText.ZIndex = 10
 statusText.Parent = statusBar
 
 -- ============================================
--- BUTTONS (resimli arka plan)
+-- BUTONLAR
 -- ============================================
 local function makeButton(text, posX, widthScale, renk)
     local b = Instance.new("TextButton")
-    b.Size = UDim2.new(widthScale, -18, 0, 38)
-    b.Position = UDim2.new(0, posX, 0, 100)
+    b.Size = UDim2.new(widthScale, -14, 0, 30)
+    b.Position = UDim2.new(0, posX, 0, 78)
     b.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     b.Text = ""
     b.AutoButtonColor = false
@@ -415,14 +633,11 @@ local function makeButton(text, posX, widthScale, renk)
     b.Parent = main
 
     local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 10)
+    c.CornerRadius = UDim.new(0, 8)
     c.Parent = b
 
-    -- Arka plan resmi
     local bgImg = Instance.new("ImageLabel")
-    bgImg.Name = "BgImg"
     bgImg.Size = UDim2.new(1, 0, 1, 0)
-    bgImg.Position = UDim2.new(0, 0, 0, 0)
     bgImg.BackgroundTransparency = 1
     bgImg.Image = BUTON_RESIM
     bgImg.ImageColor3 = renk
@@ -432,10 +647,9 @@ local function makeButton(text, posX, widthScale, renk)
     bgImg.Parent = b
 
     local bgImgCorner = Instance.new("UICorner")
-    bgImgCorner.CornerRadius = UDim.new(0, 10)
+    bgImgCorner.CornerRadius = UDim.new(0, 8)
     bgImgCorner.Parent = bgImg
 
-    -- Koyu katman (yazı okunsun)
     local overlay2 = Instance.new("Frame")
     overlay2.Size = UDim2.new(1, 0, 1, 0)
     overlay2.BackgroundColor3 = renk
@@ -445,8 +659,18 @@ local function makeButton(text, posX, widthScale, renk)
     overlay2.Parent = b
 
     local ov2Corner = Instance.new("UICorner")
-    ov2Corner.CornerRadius = UDim.new(0, 10)
+    ov2Corner.CornerRadius = UDim.new(0, 8)
     ov2Corner.Parent = overlay2
+
+    local shine = Instance.new("ImageLabel")
+    shine.Size = UDim2.new(0, 40, 1, 0)
+    shine.Position = UDim2.new(-1, 0, 0, 0)
+    shine.BackgroundTransparency = 1
+    shine.Image = SHINE_RESIM
+    shine.ImageTransparency = 0.2
+    shine.ZIndex = 11
+    shine.Visible = false
+    shine.Parent = b
 
     local stroke = Instance.new("UIStroke")
     stroke.Color = Color3.fromRGB(255, 255, 255)
@@ -460,7 +684,7 @@ local function makeButton(text, posX, widthScale, renk)
     lbl.Text = text
     lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     lbl.Font = Enum.Font.GothamBold
-    lbl.TextSize = 12
+    lbl.TextSize = 10
     lbl.ZIndex = 10
     lbl.Parent = b
 
@@ -471,27 +695,25 @@ local function makeButton(text, posX, widthScale, renk)
     lblShadow.Parent = lbl
 
     b.MouseEnter:Connect(function()
-        b.Size = UDim2.new(widthScale, -16, 0, 40)
-        b.Position = UDim2.new(0, posX + 1, 0, 99)
         bgImg.ImageColor3 = Color3.fromRGB(
             math.min(255, renk.R * 255 + 50),
             math.min(255, renk.G * 255 + 50),
             math.min(255, renk.B * 255 + 50)
         )
+        shine.Visible = true
+        shine.Position = UDim2.new(-1, 0, 0, 0)
+        shine:TweenPosition(UDim2.new(1, 0, 0, 0), "Quad", "Out", 0.6)
+        task.delay(0.7, function() shine.Visible = false end)
     end)
     b.MouseLeave:Connect(function()
-        b.Size = UDim2.new(widthScale, -18, 0, 38)
-        b.Position = UDim2.new(0, posX, 0, 100)
         bgImg.ImageColor3 = renk
     end)
 
     return b, lbl, bgImg, overlay2
 end
 
--- START: yeşil
-local startBtn, startLbl, startBg, startOv = makeButton("START", 12, 0.5, Color3.fromRGB(60, 200, 100))
--- STOP: kırmızı
-local stopBtn, stopLbl, stopBg, stopOv = makeButton("STOP", 12 + 138, 0.5, Color3.fromRGB(200, 60, 80))
+local startBtn = makeButton("START", 10, 0.5, Color3.fromRGB(60, 200, 100))
+local stopBtn = makeButton("STOP", 10 + 108, 0.5, Color3.fromRGB(200, 60, 80))
 
 -- ============================================
 -- WALK LOGIC
@@ -531,9 +753,10 @@ local function yuru()
 end
 
 -- ============================================
--- BUTTON EVENTS
+-- BUTON OLAYLARI
 -- ============================================
 startBtn.MouseButton1Click:Connect(function()
+    tikSesi()
     if getgenv().calisiyor then return end
     getgenv().calisiyor = true
     updateStatus("Running...", Color3.fromRGB(0, 255, 120))
@@ -541,17 +764,20 @@ startBtn.MouseButton1Click:Connect(function()
 end)
 
 stopBtn.MouseButton1Click:Connect(function()
+    tikSesi()
     getgenv().calisiyor = false
     durdur()
     updateStatus("Stopped", Color3.fromRGB(255, 200, 0))
 end)
 
 minimizeBtn.MouseButton1Click:Connect(function()
+    tikSesi()
     main.Visible = false
     toggleBtn.Visible = true
 end)
 
 closeBtn.MouseButton1Click:Connect(function()
+    tikSesi()
     getgenv().calisiyor = false
     durdur()
     gui:Destroy()
@@ -559,6 +785,7 @@ closeBtn.MouseButton1Click:Connect(function()
 end)
 
 toggleBtn.MouseButton1Click:Connect(function()
+    tikSesi()
     main.Visible = true
     toggleBtn.Visible = false
 end)
@@ -583,7 +810,8 @@ else
 end
 
 -- ============================================
--- START
+-- BAŞLAT
 -- ============================================
 task.spawn(yuru)
 print("[AutoWalk] Script loaded.")
+
