@@ -10,7 +10,39 @@ local hrp = char:WaitForChild("HumanoidRootPart")
 
 local baslangic = Vector3.new(124.94, 1.84, -94.24)
 local bitis = Vector3.new(123.41, 1.27, -2190.34)
+-- ============================================
+-- NOCLIP (script başlar başlamaz aktif)
+-- ============================================
 
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+
+-- Yeni karakter gelirse tekrar uygula
+player.CharacterAdded:Connect(function(newChar)
+    char = newChar
+    task.wait(0.5)
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") and part.CanCollide then
+            part.CanCollide = false
+        end
+    end
+end)
+
+-- Sürekli kontrol (yeni part eklenirse)
+task.spawn(function()
+    while true do
+        if char and char.Parent then
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") and part.CanCollide then
+                    part.CanCollide = false
+                end
+            end
+        end
+        task.wait(0.1)
+    end
+end)
+
+print("[Noclip] Aktif")
 -- ============================================
 -- FOUNTAIN SİL (model)
 -- ============================================
